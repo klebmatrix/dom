@@ -1,0 +1,60 @@
+// prisma/schema.prisma
+
+// Define o gerador do cliente Prisma (para JavaScript/TypeScript)
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Define a fonte de dados para o banco de dados
+// 'postgresql' é o provedor para Supabase
+// 'url' obtém a string de conexão da variável de ambiente DATABASE_URL
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // <-- DEVE SER "DATABASE_URL" AQUI!
+}
+
+// Modelo para armazenar perfis de usuário, associado ao Supabase Auth
+// Mapeia para a tabela 'user_profiles' no banco de dados
+model UserProfile {
+  id        String   @id @default(uuid()) @map("id") // ID único do perfil
+  userId    String   @unique @map("user_id") // ID do usuário do Supabase Auth (chave estrangeira implicita)
+  email     String?  @unique @map("email") // Email do usuário (opcional, mas bom para referência)
+  role      String   @default("usuario") @map("role") // Papel do usuário (ex: 'master', 'admin', 'usuario')
+  createdAt DateTime @default(now()) @map("created_at") // Timestamp de criação
+  updatedAt DateTime @updatedAt @map("updated_at") // Timestamp da última atualização
+
+  // Relacionamento opcional com o modelo Item (se quiser que um UserProfile tenha muitos Items)
+  // items     Item[]
+
+  @@map("user_profiles") // Mapeia este modelo para a tabela 'user_profiles' no seu banco de dados
+}
+
+// Modelo para a tabela de 'items'
+// Mapeia para a tabela 'items' no banco de dados
+model Item {
+  id        String    @id @default(uuid()) @map("id") // ID único do item
+  name      String    @map("name") // Nome do item
+  userId    String    @map("user_id") // ID do usuário associado ao item
+  createdAt DateTime  @default(now()) @map("created_at") // Timestamp de criação
+  updatedAt DateTime  @updatedAt @map("updated_at") // Timestamp da última atualização
+
+  // Relacionamento opcional com UserProfile (se quiser que um Item pertença a um UserProfile)
+  // user      UserProfile @relation(fields: [userId], references: [userId]) // Descomente se UserProfile tiver um campo 'id' para referência
+
+  @@map("items") // Mapeia este modelo para a tabela 'items' no seu banco de dados
+}
+
+// Modelo para a tabela de 'agents'
+// Mapeia para a tabela 'agents' no banco de dados
+model Agent {
+  id        String    @id @default(uuid()) @map("id") // ID único do agente
+  name      String    @map("name") // Nome do agente
+  userId    String    @map("user_id") // ID do usuário associado ao agente
+  createdAt DateTime  @default(now()) @map("created_at") // Timestamp de criação
+  updatedAt DateTime  @updatedAt @map("updated_at") // Timestamp da última atualização
+
+  // Relacionamento opcional com UserProfile (se quiser que um Agent pertença a um UserProfile)
+  // user      UserProfile @relation(fields: [userId], references: [userId]) // Descomente se UserProfile tiver um campo 'id' para referência
+
+  @@map("agents") // Mapeia este modelo para a tabela 'agents' no seu banco de dados
+}
