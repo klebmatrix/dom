@@ -9,15 +9,14 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@supabase/ssr": "^latest_version_here", // Deve estar aqui
-    "@supabase/supabase-js": "^latest_version_here", // Se você usa
-    "@prisma/client": "^latest_version_here", // Já deve estar
+    "@supabase/ssr": "^0.1.0",           // Ou a versão que seu npm install colocou
+    "@supabase/supabase-js": "^2.43.5",  // Ou a versão que seu npm install colocou
+    "@prisma/client": "^5.15.0",         // Ou a versão que seu npm install colocou
     "next": "14.2.30",
     "react": "^18",
-    "react-dom": "^18",
-    "prisma": "^latest_version_here" // Pode estar aqui ou em devDependencies
+    "react-dom": "^18"
   },
   "devDependencies": {
-    // ... outras dependências de desenvolvimento
+    "prisma": "^5.15.0"                  // Ou a versão que seu npm install colocou
   }
 }
