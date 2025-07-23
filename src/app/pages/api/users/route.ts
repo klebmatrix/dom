@@ -1,28 +1,59 @@
-// app/api/users/route.js
-import { createClient } from '../../../../../utils/supabase/server'; // CINCO ../
-import prisma from '../../../../../lib/prisma'; // CINCO ../
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+// src/app/pages/api/users/route.ts
+import { NextResponse } from 'next/server';
+import { createClient } from '../../../../utils/supabase/server'; // QUATRO ../
+import prisma from '../../../../lib/prisma'; // QUATRO ../
 
-export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const userId = searchParams.get('userId');
+export async function GET(request: Request) {
+  const supabase = createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-  if (!userId) {
-    return new Response(JSON.stringify({ error: 'Missing userId' }), { status: 400 });
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  try {
+    const users = await prisma.user.findMany({
+      // select: { id: true, email: true, role: true } // Selecione os campos que deseja retornar
+    });
+    return NextResponse.json(users, { status: 200 });
+  } catch (error: any) {
+    console.error('Erro ao buscar usuários:', error.message);
+    return NextResponse.json({ error: 'Falha ao buscar usuários: ' + error.message }, { status: 500 });
+  }
+}
 
-  if (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+export async function POST(request: Request) {
+  const supabase = createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 
-  return new Response(JSON.stringify(data), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  const { email, role } = await request.json(); // Exemplo de dados para criar um novo usuário
+
+  try {
+    // Primeiro, verifique se o email já existe para evitar duplicação no Prisma
+    const existingUser = await prisma.user.findUnique({
+      where: { email: email }
+    });
+
+    if (existingUser) {
+      return NextResponse.json({ error: 'Usuário com este email já existe.' }, { status: 409 });
+    }
+
+    const newUser = await prisma.user.create({
+      data: {
+        email,
+        role,
+        // Adicione outros campos conforme seu schema.prisma
+        supabaseId: user.id // Se você quer associar o criador
+      },
+    });
+    return NextResponse.json(newUser, { status: 201 });
+
+  } catch (error: any) {
+    console.error('Erro ao criar usuário:', error.message);
+    return NextResponse.json({ error: 'Falha ao criar usuário: ' + error.message }, { status: 500 });
+  }
 }
