@@ -1,28 +1,24 @@
-// dom/prisma/schema.prisma
+// prisma/schema.prisma
 
-// Define a fonte de dados do seu banco de dados
-// 'postgresql' é um exemplo; use o provider correto para o seu banco (mysql, sqlite, etc.)
+// Mantenha seu datasource e generator como estão (ou ajuste para seu banco de dados, se for diferente de PostgreSQL)
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL") // A URL de conexão com seu banco, geralmente de uma variável de ambiente
+  provider = "postgresql" // Exemplo: mude para "mysql", "sqlite", etc. se for o seu caso
+  url      = env("DATABASE_URL")
 }
 
-// O gerador é responsável por gerar o Prisma Client,
-// que é o código que você usa para interagir com o banco de dados.
 generator client {
   provider = "prisma-client-js"
-  // Não adicione 'output' aqui a menos que você queira gerar o cliente em um local não padrão.
-  // O padrão é node_modules/.prisma/client, que é geralmente o ideal.
 }
 
-// Seus modelos de dados (representando as tabelas do seu banco de dados)
-// Exemplo de um modelo de usuário:
-// model User {
-//   id        String    @id @default(uuid()) // ID único para o usuário
-//   email     String    @unique // E-mail, deve ser único
-//   name      String?   // Nome do usuário, opcional
-//   createdAt DateTime  @default(now()) // Data de criação, padrão para o momento atual
-//   updatedAt DateTime  @updatedAt // Data da última atualização
-// }
+// Seu novo modelo 'User' com os campos fornecidos:
+model User {
+  id         String   @id @default(uuid()) // "iauuid" se torna 'id' com tipo String e padrão UUID
+  email      String   @unique // "cordae-mailtexto" se torna 'email' do tipo String e único
+  name       String   // "cordanometexto" se torna 'name' do tipo String
+  role       String   // "cordapapeltexto" se torna 'role' do tipo String (ex: "admin", "user")
+  created_at DateTime @default(now()) @map("created_at") // "cordacriado_emcarimbo de data/hora com fuso horário" se torna 'created_at' do tipo DateTime
+                                                       // @map("created_at") é usado se a coluna no banco tem nome diferente do campo no Prisma
+  // Se precisar de mais campos, adicione-os aqui
+}
 
-// Adicione aqui todos os outros modelos (tabelas) do seu banco de dados.
+// Adicione aqui outros modelos se você tiver mais tabelas no seu banco de dados.
