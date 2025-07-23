@@ -1,0 +1,145 @@
+// src/app/pages/api/items/[id]/route.ts
+// Este arquivo lida com operações CRUD para um item específico, usando seu ID.
+
+import { NextResponse } from 'next/server';
+// Importa o cliente Supabase do caminho relativo correto.
+// Este arquivo está em src/app/pages/api/items/[id]/route.ts
+// Para chegar em src/utils/supabase/server.ts, precisamos subir 5 níveis:
+// [id]/ -> items/ -> api/ -> pages/ -> app/ -> src/
+// Daí, descer para utils/supabase/server.ts
+import { createClient } from '../../../../../utils/supabase/server'; 
+// Importa o cliente Prisma do caminho relativo correto.
+// O mesmo raciocínio se aplica para chegar em src/lib/prisma.ts
+import prisma from '../../../../../lib/prisma'; 
+
+// Define uma interface para os parâmetros da URL, neste caso, o 'id' do item.
+interface Context {
+  params: {
+    id: string; // O ID do item que virá na URL (ex: /api/items/123)
+  };
+}
+
+/**
+ * Função GET para buscar um item específico pelo ID.
+ * @param request O objeto Request do Next.js.
+ * @param context O contexto que contém os parâmetros da URL (params).
+ * @returns NextResponse com os dados do item ou um erro.
+ */
+export async function GET(request: Request, context: Context) {
+  // Inicializa o cliente Supabase para operações de servidor.
+  const supabase = createClient();
+  // Obtém o usuário autenticado para verificar a autorização.
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  // Se não houver usuário autenticado ou ocorrer um erro de autenticação, retorna 401 Não Autorizado.
+  if (authError || !user) {
+    console.error('GET /api/items/[id] - Erro de autenticação:', authError?.message || 'Usuário não autenticado');
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  }
+
+  // Extrai o ID do item dos parâmetros da URL.
+  const { id } = context.params;
+
+  try {
+    // Busca o item no banco de dados usando o Prisma.
+    const item = await prisma.item.findUnique({
+      where: {
+        id: id, // Usa o ID extraído da URL.
+      },
+      // Você pode adicionar um 'select' aqui para retornar apenas campos específicos,
+      // por exemplo: select: { id: true, name: true, description: true }
+    });
+
+    // Se o item não for encontrado, retorna 404 Not Found.
+    if (!item) {
+      console.warn(`GET /api/items/[id] - Item com ID ${id} não encontrado.`);
+      return NextResponse.json({ error: 'Item não encontrado' }, { status: 404 });
+    }
+
+    // Retorna o item encontrado com status 200 OK.
+    return NextResponse.json(item, { status: 200 });
+
+  } catch (error: any) {
+    // Em caso de erro no servidor (ex: problema de conexão com DB), retorna 500 Internal Server Error.
+    console.error(`GET /api/items/[id] - Erro ao buscar item ${id}:`, error.message);
+    return NextResponse.json({ error: 'Falha ao buscar item: ' + error.message }, { status: 500 });
+  }
+}
+
+/**
+ * Função PUT para atualizar um item específico pelo ID.
+ * @param request O objeto Request do Next.js (contém os dados para atualização).
+ * @param context O contexto que contém os parâmetros da URL (params).
+ * @returns NextResponse com os dados do item atualizado ou um erro.
+ */
+export async function PUT(request: Request, context: Context) {
+  const supabase = createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    console.error('PUT /api/items/[id] - Erro de autenticação:', authError?.message || 'Usuário não autenticado');
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  }
+
+  const { id } = context.params;
+  // Extrai os dados do corpo da requisição para atualização.
+  const { name, description, price } = await request.json(); 
+
+  try {
+    // Atualiza o item no banco de dados usando o Prisma.
+    const updatedItem = await prisma.item.update({
+      where: {
+        id: id, // Usa o ID extraído da URL.
+      },
+      data: {
+        name,
+        description,
+        price: parseFloat(price), // Converte para número, se necessário.
+        // Você pode adicionar validações aqui antes de atualizar.
+      },
+    });
+
+    // Retorna o item atualizado com status 200 OK.
+    return NextResponse.json(updatedItem, { status: 200 });
+
+  } catch (error: any) {
+    // Em caso de erro, retorna 500 Internal Server Error.
+    console.error(`PUT /api/items/[id] - Erro ao atualizar item ${id}:`, error.message);
+    return NextResponse.json({ error: 'Falha ao atualizar item: ' + error.message }, { status: 500 });
+  }
+}
+
+/**
+ * Função DELETE para remover um item específico pelo ID.
+ * @param request O objeto Request do Next.js.
+ * @param context O contexto que contém os parâmetros da URL (params).
+ * @returns NextResponse indicando sucesso ou um erro.
+ */
+export async function DELETE(request: Request, context: Context) {
+  const supabase = createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    console.error('DELETE /api/items/[id] - Erro de autenticação:', authError?.message || 'Usuário não autenticado');
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  }
+
+  const { id } = context.params;
+
+  try {
+    // Deleta o item do banco de dados usando o Prisma.
+    await prisma.item.delete({
+      where: {
+        id: id, // Usa o ID extraído da URL.
+      },
+    });
+
+    // Retorna 204 No Content para indicar que a operação foi bem-sucedida e não há conteúdo para retornar.
+    return NextResponse.json({ message: 'Item deletado com sucesso' }, { status: 204 }); 
+
+  } catch (error: any) {
+    // Em caso de erro, retorna 500 Internal Server Error.
+    console.error(`DELETE /api/items/[id] - Erro ao deletar item ${id}:`, error.message);
+    return NextResponse.json({ error: 'Falha ao deletar item: ' + error.message }, { status: 500 });
+  }
+}
