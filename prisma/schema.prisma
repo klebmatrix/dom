@@ -1,0 +1,28 @@
+// dom/prisma/schema.prisma
+
+// Define a fonte de dados do seu banco de dados
+// 'postgresql' é um exemplo; use o provider correto para o seu banco (mysql, sqlite, etc.)
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // A URL de conexão com seu banco, geralmente de uma variável de ambiente
+}
+
+// O gerador é responsável por gerar o Prisma Client,
+// que é o código que você usa para interagir com o banco de dados.
+generator client {
+  provider = "prisma-client-js"
+  // Não adicione 'output' aqui a menos que você queira gerar o cliente em um local não padrão.
+  // O padrão é node_modules/.prisma/client, que é geralmente o ideal.
+}
+
+// Seus modelos de dados (representando as tabelas do seu banco de dados)
+// Exemplo de um modelo de usuário:
+// model User {
+//   id        String    @id @default(uuid()) // ID único para o usuário
+//   email     String    @unique // E-mail, deve ser único
+//   name      String?   // Nome do usuário, opcional
+//   createdAt DateTime  @default(now()) // Data de criação, padrão para o momento atual
+//   updatedAt DateTime  @updatedAt // Data da última atualização
+// }
+
+// Adicione aqui todos os outros modelos (tabelas) do seu banco de dados.
