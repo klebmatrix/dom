@@ -1,81 +1,46 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/utils/supabase/client'
 
 export default function LoginPage() {
-  const router = useRouter()
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [remember, setRemember] = useState(false)
-  const [error, setError] = useState('')
+  const [senha, setSenha] = useState('')
+  const router = useRouter()
 
-  useEffect(() => {
-    const rememberedEmail = localStorage.getItem('rememberedEmail')
-    if (rememberedEmail) {
-      setEmail(rememberedEmail)
-      setRemember(true)
-    }
-  }, [])
-
-  const handleLogin = async () => {
-    setError('')
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    })
+  const handleLogin = async (e) => {
+    e.preventDefault()
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha })
     if (error) {
-      setError('Credenciais inválidas')
+      alert('Credenciais inválidas')
     } else {
-      if (remember) {
-        localStorage.setItem('rememberedEmail', email)
-      } else {
-        localStorage.removeItem('rememberedEmail')
-      }
-      router.push('/painel/master')
+      // Pega o usuário
+      const { user } = data
+      // Redireciona para painel
+      router.push('/painel')
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 text-white">
-      <div className="bg-gray-950 p-8 rounded-2xl shadow-xl w-full max-w-md">
-        <h2 className="text-3xl font-bold mb-6 text-center">Entrar</h2>
-        
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
+      <h1 className="text-3xl mb-6">Login</h1>
+      <form onSubmit={handleLogin} className="flex flex-col gap-4 w-80">
         <input
           type="email"
           placeholder="Email"
-          className="w-full p-3 mb-4 rounded-xl bg-gray-800 text-white placeholder-gray-400"
+          className="p-2 rounded text-black"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <input
           type="password"
           placeholder="Senha"
-          className="w-full p-3 mb-4 rounded-xl bg-gray-800 text-white placeholder-gray-400"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          className="p-2 rounded text-black"
+          value={senha}
+          onChange={(e) => setSenha(e.target.value)}
         />
-
-        <div className="flex items-center mb-4">
-          <input
-            id="remember"
-            type="checkbox"
-            checked={remember}
-            onChange={(e) => setRemember(e.target.checked)}
-            className="mr-2"
-          />
-          <label htmlFor="remember" className="text-sm">Lembrar usuário</label>
-        </div>
-
-        <button
-          onClick={handleLogin}
-          className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-700 transition"
-        >
-          Entrar
-        </button>
-      </div>
+        <button className="bg-blue-600 hover:bg-blue-700 p-2 rounded" type="submit">Entrar</button>
+      </form>
     </div>
   )
 }
