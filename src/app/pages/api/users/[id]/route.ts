@@ -1,131 +1,100 @@
-// app/api/users/[id]/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient, supabaseAdmin } from '../../../../utils/supabase/server'; // Cliente Supabase para o servidor
-import prisma from '../../../../lib/prisma';
+// src/app/pages/api/users/[id]/route.ts
+import { NextResponse } from 'next/server';
+import { createClient } from '../../../../../utils/supabase/server'; // Note o caminho relativo diferente aqui!
+import prisma from '../../../../../lib/prisma'; // Note o caminho relativo diferente aqui!
 
-// PUT: Atualizar papel de usuário
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = params; // O ID aqui é o ID do perfil, não o user_id do auth.users
-  const { role: newRole } = await req.json();
+// Tipagem para os parâmetros da URL
+interface Context {
+  params: {
+    id: string; // O ID do usuário na URL
+  };
+}
 
-  if (!newRole) {
-    return NextResponse.json({ error: 'O novo papel é obrigatório.' }, { status: 400 });
+export async function GET(request: Request, context: Context) {
+  const supabase = createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 
+  const { id } = context.params;
+
   try {
-    // 1. Obtenha a sessão do usuário que fez a requisição
-    const supabase = createServerSupabaseClient();
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError || !session || !session.user) {
-      console.error('Erro ao obter sessão ou usuário na API PUT /api/users/[id]:', sessionError?.message || 'Sessão ou usuário não encontrados.');
-      return NextResponse.json({ error: 'Não autorizado. Sessão de autenticação inválida ou ausente.' }, { status: 401 });
-    }
-
-    const callerUser = session.user; // Agora callerUser é garantido se não houver erro
-
-    // 2. Verifique o papel do usuário que está chamando esta API Route
-    const callerProfile = await prisma.userProfile.findUnique({
-      where: { userId: callerUser.id },
+    // Exemplo de uso do Prisma para buscar um usuário pelo ID
+    const foundUser = await prisma.user.findUnique({
+      where: {
+        id: id, // O ID do usuário vindo da URL
+      },
+      // select: { ... } // Especifique os campos se não quiser retornar tudo
     });
 
-    if (!callerProfile) {
-      console.error('Erro ao obter perfil do usuário chamador: Perfil não encontrado.');
-      return NextResponse.json({ error: 'Não autorizado. Perfil do usuário chamador não encontrado.' }, { status: 401 });
+    if (!foundUser) {
+      return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
     }
 
-    const callerRole = callerProfile.role;
+    return NextResponse.json(foundUser, { status: 200 });
 
-    // 3. Implemente a lógica de permissão para atualizar papéis
-    if (callerRole !== 'master') { // Apenas master pode atualizar papéis
-      return NextResponse.json({ error: 'Você não tem permissão para atualizar papéis de usuários.' }, { status: 403 });
-    }
+  } catch (error: any) {
+    console.error(`Erro ao buscar usuário ${id}:`, error.message);
+    return NextResponse.json({ error: 'Falha ao buscar usuário: ' + error.message }, { status: 500 });
+  }
+}
 
-    // 4. Atualize o papel do usuário usando Prisma
-    const updatedUser = await prisma.userProfile.update({
-      where: { id: id },
-      data: { role: newRole },
+export async function PUT(request: Request, context: Context) {
+  const supabase = createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  }
+
+  const { id } = context.params;
+  const { email, role } = await request.json(); // Exemplo de dados para atualização
+
+  try {
+    // Exemplo de uso do Prisma para atualizar um usuário pelo ID
+    const updatedUser = await prisma.user.update({
+      where: {
+        id: id,
+      },
+      data: {
+        email,
+        role,
+        // Outros campos a serem atualizados
+      },
     });
 
     return NextResponse.json(updatedUser, { status: 200 });
 
-  } catch (err: any) {
-    console.error('Erro na API Route PUT /api/users/[id]:', err.message);
-    return NextResponse.json({ error: err.message || 'Erro interno do servidor.' }, { status: 500 });
+  } catch (error: any) {
+    console.error(`Erro ao atualizar usuário ${id}:`, error.message);
+    return NextResponse.json({ error: 'Falha ao atualizar usuário: ' + error.message }, { status: 500 });
   }
 }
 
-// NOVO MÉTODO PATCH: Ativar/Desativar Usuário
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
-  const { id: userAuthId } = params; // O ID aqui é o user_id do auth.users
-  const { isActive } = await req.json(); // Espera um booleano (true para ativar, false para desativar)
+export async function DELETE(request: Request, context: Context) {
+  const supabase = createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-  if (typeof isActive !== 'boolean') {
-    return NextResponse.json({ error: 'O status de ativação/desativação é obrigatório e deve ser um booleano.' }, { status: 400 });
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 
+  const { id } = context.params;
+
   try {
-    // 1. Obtenha a sessão do usuário que fez a requisição
-    const supabase = createServerSupabaseClient();
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError || !session || !session.user) {
-      console.error('Erro ao obter sessão ou usuário na API PATCH /api/users/[id]:', sessionError?.message || 'Sessão ou usuário não encontrados.');
-      return NextResponse.json({ error: 'Não autorizado. Sessão de autenticação inválida ou ausente.' }, { status: 401 });
-    }
-
-    const callerUser = session.user;
-
-    // 2. Verifique o papel do usuário que está chamando esta API Route
-    const callerProfile = await prisma.userProfile.findUnique({
-      where: { userId: callerUser.id },
+    // Exemplo de uso do Prisma para deletar um usuário pelo ID
+    await prisma.user.delete({
+      where: {
+        id: id,
+      },
     });
 
-    if (!callerProfile) {
-      console.error('Erro ao obter perfil do usuário chamador: Perfil não encontrado.');
-      return NextResponse.json({ error: 'Não autorizado. Perfil do usuário chamador não encontrado.' }, { status: 401 });
-    }
+    return NextResponse.json({ message: 'Usuário deletado com sucesso' }, { status: 204 }); // 204 No Content
 
-    const callerRole = callerProfile.role;
-
-    // 3. Implemente a lógica de permissão para ativar/desativar usuários
-    // Apenas 'master' pode ativar/desativar usuários
-    if (callerRole !== 'master') {
-      return NextResponse.json({ error: 'Você não tem permissão para ativar/desativar usuários.' }, { status: 403 });
-    }
-
-    // 4. Não permitir que o master desative a si mesmo
-    if (userAuthId === callerUser.id) {
-      return NextResponse.json({ error: 'Você não pode ativar/desativar a si mesmo.' }, { status: 403 });
-    }
-
-    // 5. Atualize o status do usuário em auth.users (Supabase Auth Admin)
-    const { data: updatedAuthUser, error: updateAuthError } = await supabaseAdmin.auth.admin.updateUser(
-      userAuthId,
-      {
-        ban_and_unban: isActive ? false : true, // true para banir (desativar), false para desbanir (ativar)
-      }
-    );
-
-    if (updateAuthError) {
-      console.error('Erro ao atualizar status do usuário no Supabase Auth:', updateAuthError.message);
-      return NextResponse.json({ error: updateAuthError.message || 'Erro ao atualizar status do usuário.' }, { status: 500 });
-    }
-
-    // Opcional: Buscar o perfil atualizado para retornar um objeto completo
-    const updatedUserProfile = await prisma.userProfile.findUnique({
-        where: { userId: userAuthId },
-    });
-
-
-    return NextResponse.json({
-        message: 'Status do usuário atualizado com sucesso!',
-        email: updatedUserProfile?.email || updatedAuthUser.user?.email, // Retorna o email para feedback
-        isActive: isActive, // Retorna o status que foi aplicado
-    }, { status: 200 });
-
-  } catch (err: any) {
-    console.error('Erro na API Route PATCH /api/users/[id]:', err.message);
-    return NextResponse.json({ error: err.message || 'Erro interno do servidor.' }, { status: 500 });
+  } catch (error: any) {
+    console.error(`Erro ao deletar usuário ${id}:`, error.message);
+    return NextResponse.json({ error: 'Falha ao deletar usuário: ' + error.message }, { status: 500 });
   }
 }

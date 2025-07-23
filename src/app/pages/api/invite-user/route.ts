@@ -1,96 +1,40 @@
-// app/api/invite-user/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-// Importa o cliente Supabase para o servidor (para obter a sessão) e o cliente admin
-import { createServerSupabaseClient, supabaseAdmin } from '../../../utils/supabase/server';
-import prisma from '../../../lib/prisma'; // Importa a instância do Prisma Client
+// src/app/pages/api/invite-user/route.ts
+import { NextResponse } from 'next/server';
+import { createClient } from '../../../../utils/supabase/server'; // Importa o cliente Supabase
+import prisma from '../../../../lib/prisma'; // Importa o cliente Prisma
 
-export async function POST(req: NextRequest) {
-  const { email, password, role } = await req.json();
-
-  if (!email || !password || !role) {
-    return NextResponse.json({ error: 'E-mail, senha e papel são obrigatórios.' }, { status: 400 });
-  }
+export async function POST(request: Request) {
+  const supabase = createClient();
+  const { email, role } = await request.json();
 
   try {
-    // 1. Obtenha a sessão do usuário que fez a requisição usando o cliente do servidor
-    const supabase = createServerSupabaseClient();
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    // Exemplo de uso do Supabase para convidar usuário (ajuste conforme sua lógica de auth)
+    // Se você usa o convite do Supabase auth, a lógica é diferente.
+    // Este é um exemplo de registro e depois atualização no DB.
+    const { data: user, error: authError } = await supabase.auth.admin.inviteUserByEmail(email);
 
-    if (sessionError || !session || !session.user) {
-      console.error('Erro ao obter sessão ou usuário chamador na API /api/invite-user:', sessionError?.message || 'Sessão ou usuário não encontrados.');
-      return NextResponse.json({ error: 'Não autorizado. Sessão de autenticação inválida ou ausente.' }, { status: 401 });
+    if (authError) {
+      console.error('Erro ao convidar usuário pelo Supabase:', authError.message);
+      return NextResponse.json({ error: authError.message }, { status: 500 });
     }
 
-    const callerUser = session.user; // Agora callerUser é garantido se não houver erro
-
-    // 2. Verifique o papel do usuário que está chamando esta API Route usando Prisma
-    const callerProfile = await prisma.userProfile.findUnique({
-      where: { userId: callerUser.id },
-    });
-
-    if (!callerProfile) {
-      console.error('Erro ao obter perfil do usuário chamador: Perfil não encontrado.');
-      return NextResponse.json({ error: 'Não autorizado. Perfil do usuário chamador não encontrado.' }, { status: 401 });
-    }
-
-    const callerRole = callerProfile.role;
-
-    // 3. Implemente a lógica de permissão para convidar usuários
-    if (callerRole === 'master') {
-      // MASTER pode criar qualquer papel
-    } else if (callerRole === 'admin') {
-      // ADMIN pode criar 'gerente', 'operador', 'usuarioA', 'usuarioB', 'usuarioC', 'usariod'.
-      // Eles NÃO podem criar 'master' ou 'admin'.
-      const allowedRolesForAdmin = ['gerente', 'operador', 'usuarioA', 'usuarioB', 'usuarioC', 'usariod'];
-      if (!allowedRolesForAdmin.includes(role)) {
-        return NextResponse.json(
-          { error: `Administradores só podem criar usuários com os papéis: ${allowedRolesForAdmin.join(', ')}.` },
-          { status: 403 }
-        );
-      }
-    } else {
-      // Outros papéis (gerente, usuario) não têm permissão para convidar novos usuários.
-      return NextResponse.json({ error: 'Você não tem permissão para convidar novos usuários.' }, { status: 403 });
-    }
-
-    // 4. Crie o novo usuário em auth.users (usando supabaseAdmin)
-    const { data: newUserAuth, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true, // Opcional: confirma o email automaticamente
-    });
-
-    if (createUserError || !newUserAuth.user) {
-      console.error('Erro ao criar usuário no Supabase Auth:', createUserError?.message);
-      return NextResponse.json({ error: createUserError?.message || 'Erro ao criar usuário.' }, { status: 400 });
-    }
-
-    const newUserId = newUserAuth.user.id;
-
-    // 5. Crie o perfil do usuário na tabela user_profiles (usando Prisma)
-    const newUserProfile = await prisma.userProfile.create({
+    // Exemplo de uso do Prisma para salvar informações do convite/usuário no seu DB
+    const newUser = await prisma.user.create({
       data: {
-        userId: newUserId,
         email: email,
         role: role,
+        supabaseId: user?.user?.id, // Associa ao ID do Supabase
+        // Outros campos necessários
       },
     });
 
-    // NOVO: Se o papel for 'usariod', crie um agente padrão para ele
-    if (role === 'usariod') {
-      await prisma.agent.create({
-        data: {
-          name: "Agente de Instruções Padrão", // Nome padrão para o agente
-          userId: newUserId,
-        },
-      });
-      console.log(`Agente padrão criado para o novo usuário usariod: ${email}`);
-    }
+    return NextResponse.json({ message: 'Convite enviado e usuário criado!', user: newUser }, { status: 200 });
 
-    return NextResponse.json({ message: 'Usuário convidado com sucesso!', userId: newUserId, userProfile: newUserProfile }, { status: 200 });
-
-  } catch (err: any) {
-    console.error('Erro na API Route /api/invite-user:', err.message);
-    return NextResponse.json({ error: err.message || 'Erro interno do servidor.' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Erro na API de convite de usuário:', error.message);
+    return NextResponse.json({ error: 'Falha ao convidar usuário: ' + error.message }, { status: 500 });
   }
 }
+
+// Se você precisar de outras operações (GET, PUT, DELETE), adicione aqui
+// export async function GET(request: Request) { ... }

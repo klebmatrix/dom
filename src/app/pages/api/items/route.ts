@@ -1,68 +1,52 @@
-// app/api/items/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '../../../utils/supabase/server'; // Cliente Supabase para o servidor
-import prisma from '../../../lib/prisma';
+// src/app/pages/api/items/route.ts
+import { NextResponse } from 'next/server';
+import { createClient } from '../../../../utils/supabase/server'; // Importa o cliente Supabase
+import prisma from '../../../../lib/prisma'; // Importa o cliente Prisma
 
-// GET: Listar itens do usuário logado
-export async function GET(req: NextRequest) {
+export async function GET(request: Request) {
+  const supabase = createClient();
+  // Você pode usar o Supabase para verificar a sessão do usuário ou outras coisas de autenticação/autorização aqui
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  }
+
   try {
-    // 1. Obtenha a sessão do usuário
-    const supabase = createServerSupabaseClient();
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError || !session || !session.user) {
-      console.error('Erro ao obter sessão ou usuário na API GET /api/items:', sessionError?.message || 'Sessão ou usuário não encontrados.');
-      return NextResponse.json({ error: 'Não autorizado. Sessão de autenticação inválida ou ausente.' }, { status: 401 });
-    }
-
-    const user = session.user; // Agora user é garantido se não houver erro
-
-    // 2. Busque os itens do usuário usando Prisma
-    const items = await prisma.item.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: 'desc' },
-    });
-
+    // Exemplo de uso do Prisma para buscar todos os itens
+    const items = await prisma.item.findMany(); // Supondo que você tenha um modelo 'Item' no seu schema.prisma
     return NextResponse.json(items, { status: 200 });
 
-  } catch (err: any) {
-    console.error('Erro na API Route GET /api/items:', err.message);
-    return NextResponse.json({ error: err.message || 'Erro interno do servidor.' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Erro ao buscar itens:', error.message);
+    return NextResponse.json({ error: 'Falha ao buscar itens: ' + error.message }, { status: 500 });
   }
 }
 
-// POST: Adicionar um novo item
-export async function POST(req: NextRequest) {
-  const { name } = await req.json();
+export async function POST(request: Request) {
+  const supabase = createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-  if (!name) {
-    return NextResponse.json({ error: 'O nome do item é obrigatório.' }, { status: 400 });
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 
+  const { name, description, price } = await request.json(); // Exemplo de dados para um novo item
+
   try {
-    // 1. Obtenha a sessão do usuário
-    const supabase = createServerSupabaseClient();
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError || !session || !session.user) {
-      console.error('Erro ao obter sessão ou usuário na API POST /api/items:', sessionError?.message || 'Sessão ou usuário não encontrados.');
-      return NextResponse.json({ error: 'Não autorizado. Sessão de autenticação inválida ou ausente.' }, { status: 401 });
-    }
-
-    const user = session.user; // Agora user é garantido se não houver erro
-
-    // 2. Crie o item usando Prisma
+    // Exemplo de uso do Prisma para criar um novo item
     const newItem = await prisma.item.create({
       data: {
-        name: name,
-        userId: user.id,
+        name,
+        description,
+        price: parseFloat(price), // Certifique-se de que o tipo corresponde ao seu schema
+        createdBy: user.id, // Associa o item ao usuário logado
       },
     });
+    return NextResponse.json(newItem, { status: 201 });
 
-    return NextResponse.json(newItem, { status: 201 }); // 201 Created
-
-  } catch (err: any) {
-    console.error('Erro na API Route POST /api/items:', err.message);
-    return NextResponse.json({ error: err.message || 'Erro interno do servidor.' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Erro ao criar item:', error.message);
+    return NextResponse.json({ error: 'Falha ao criar item: ' + error.message }, { status: 500 });
   }
 }
