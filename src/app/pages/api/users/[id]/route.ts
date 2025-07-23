@@ -1,9 +1,9 @@
-// src/app/pages/api/users/[id]/route.ts
+// src/app/pages/api/items/[id]/route.ts
 import { NextResponse } from 'next/server';
-import { createClient } from '../../../../../utils/supabase/server'; // Note o caminho relativo diferente aqui!
-import prisma from '../../../../../lib/prisma'; // Note o caminho relativo diferente aqui!
+import { createClient } from '../../../../../utils/supabase/server'; // Adicione um '../' a mais!
+import prisma from '../../../../../lib/prisma'; // Adicione um '../' a mais!
 
-// Tipagem para os parâmetros da URL
+// ... o restante do seu código neste arquivo// Tipagem para os parâmetros da URL
 interface Context {
   params: {
     id: string; // O ID do usuário na URL
