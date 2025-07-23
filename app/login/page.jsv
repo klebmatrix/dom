@@ -1,0 +1,15 @@
+if (data && data.user) {
+  const { data: perfil } = await supabase
+    .from('usuarios')
+    .select('nivel')
+    .eq('id', data.user.id)
+    .single()
+
+  if (perfil?.nivel === 'master') {
+    router.push('/master') // Redireciona ao painel master
+  } else if (perfil?.nivel === 'admin') {
+    router.push('/admin')
+  } else {
+    router.push('/usuario')
+  }
+}
