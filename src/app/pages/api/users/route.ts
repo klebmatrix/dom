@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '../../../../utils/supabase/server'; // QUATRO ../
 import prisma from '../../../../lib/prisma'; // QUATRO ../
 
+// ... o restante do seu código GET e POST para usuários (conforme o exemplo que te dei)
 export async function GET(request: Request) {
   const supabase = createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
