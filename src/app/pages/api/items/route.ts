@@ -1,9 +1,7 @@
 // src/app/pages/api/items/route.ts
 import { NextResponse } from 'next/server';
-import { createClient } from '../../../../utils/supabase/server'; // Importa o cliente Supabase
-import prisma from '../../../../lib/prisma'; // Importa o cliente Prisma
-
-export async function GET(request: Request) {
+import { createClient } from '../../../../utils/supabase/server'; // QUATRO ../
+import prisma from '../../../../lib/prisma'; // QUATRO ../export async function GET(request: Request) {
   const supabase = createClient();
   // Você pode usar o Supabase para verificar a sessão do usuário ou outras coisas de autenticação/autorização aqui
   const { data: { user }, error: authError } = await supabase.auth.getUser();

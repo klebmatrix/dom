@@ -1,8 +1,7 @@
 // src/app/pages/api/invite-user/route.ts
 import { NextResponse } from 'next/server';
-import { createClient } from '../../../../utils/supabase/server'; // Importa o cliente Supabase
-import prisma from '../../../../lib/prisma'; // Importa o cliente Prisma
-
+import { createClient } from '../../../../utils/supabase/server'; // QUATRO ../
+import prisma from '../../../../lib/prisma'; // QUATRO ../
 export async function POST(request: Request) {
   const supabase = createClient();
   const { email, role } = await request.json();

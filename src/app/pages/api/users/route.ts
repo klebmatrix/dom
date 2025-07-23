@@ -1,6 +1,6 @@
 // app/api/users/route.js
-import { createClient } from '@supabase/supabase-js';
-
+import { createClient } from '../../../../../utils/supabase/server'; // CINCO ../
+import prisma from '../../../../../lib/prisma'; // CINCO ../
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 export async function GET(request) {
