@@ -1,14 +1,12 @@
-// lib/prisma.ts
+// src/utils/prisma.ts
 import { PrismaClient } from '@prisma/client';
 
-// Declaração global para evitar múltiplas instâncias do PrismaClient em hot-reloads
 declare global {
   var prisma: PrismaClient | undefined;
 }
 
 let prisma: PrismaClient;
 
-// Garante que apenas uma instância do PrismaClient seja criada
 if (process.env.NODE_ENV === 'production') {
   prisma = new PrismaClient();
 } else {
