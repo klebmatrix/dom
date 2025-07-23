@@ -9,14 +9,14 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.1.0",           // Ou a versão que seu npm install colocou
-    "@supabase/supabase-js": "^2.43.5",  // Ou a versão que seu npm install colocou
-    "@prisma/client": "^5.15.0",         // Ou a versão que seu npm install colocou
+    "@supabase/ssr": "^0.1.0",           
+    "@supabase/supabase-js": "^2.43.5",  
+    "@prisma/client": "^5.15.0",         
     "next": "14.2.30",
     "react": "^18",
     "react-dom": "^18"
   },
   "devDependencies": {
-    "prisma": "^5.15.0"                  // Ou a versão que seu npm install colocou
+    "prisma": "^5.15.0"                  
   }
 }
