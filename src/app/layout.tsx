@@ -1,10 +1,10 @@
-// app/layout.tsx
+// src/app/layout.tsx
 import './globals.css'; // Importa os estilos globais, incluindo Tailwind CSS
 import React from 'react';
 
 export const metadata = {
-  title: 'DOM', // Título simplificado para "DOM"
-  description: 'Sistema de Gerenciamento.', // Descrição simplificada
+  title: 'DOM',
+  description: 'Sistema de Gerenciamento.',
 };
 
 export default function RootLayout({
@@ -14,22 +14,26 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      {/* Definindo um fundo escuro global e uma fonte padrão */}
-      <body className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 to-black text-gray-100 font-sans p-4">
-        <header className="w-full max-w-2xl text-center mb-10 mt-8">
+      {/* O body agora atua como um container flexível que ocupa a tela toda. */}
+      {/* Removemos 'items-center justify-center' e 'max-w' aqui. */}
+      {/* Adicionado 'overflow-x-hidden' para evitar barras de rolagem horizontais indesejadas. */}
+      <body className="min-h-screen flex flex-col bg-gradient-to-br from-gray-900 to-black text-gray-100 font-sans">
+
+        {/* O cabeçalho ocupa 100% da largura, com conteúdo centralizado e padding */}
+        <header className="w-full text-center py-8 px-4">
           <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-            DOM {/* Apenas "DOM" como título visual */}
+            DOM
           </h1>
-          {/* Removido o subtítulo "Sistema de Gerenciamento Inteligente" */}
         </header>
 
-        {/* Renderiza o conteúdo da página atual (children) */}
-        <main className="flex-grow w-full max-w-4xl">
+        {/* O <main> agora se expande para ocupar o máximo de espaço, sem limite de largura (max-w) imposto aqui. */}
+        {/* O conteúdo dentro do 'children' (seu PainelMaster) poderá definir seu próprio max-w ou centralização. */}
+        <main className="flex-grow w-full px-4 py-8">
           {children}
         </main>
 
-        {/* Rodapé opcional */}
-        <footer className="w-full text-center py-6 text-gray-500 text-sm mt-10">
+        {/* O rodapé ocupa 100% da largura, com texto centralizado e padding */}
+        <footer className="w-full text-center py-6 px-4 text-gray-500 text-sm">
           &copy; {new Date().getFullYear()} Projeto Dom. Todos os direitos reservados.
         </footer>
       </body>

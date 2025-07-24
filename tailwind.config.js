@@ -1,14 +1,14 @@
+// tailwind.config.js
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    "./src/app/**/*.{js,ts,jsx,tsx}",
-    "./src/pages/**/*.{js,ts,jsx,tsx}",
-    "./src/components/**/*.{js,ts,jsx,tsx}",
+    './app/**/*.{js,ts,jsx,tsx,mdx}', // Para a pasta app/ no Next.js 13+
+    './pages/**/*.{js,ts,jsx,tsx,mdx}', // Para a pasta pages/ no Next.js
+    './components/**/*.{js,ts,jsx,tsx,mdx}', // Se você tiver uma pasta components
+    './src/**/*.{js,ts,jsx,tsx,mdx}', // Uma opção mais genérica para o src
   ],
   theme: {
     extend: {},
   },
-  plugins: [
-    require('@tailwindcss/forms'), // se estiver usando esse plugin
-  ],
-};
+  plugins: [],
+}

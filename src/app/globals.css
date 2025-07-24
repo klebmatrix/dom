@@ -1,10 +1,17 @@
-        /* app/globals.css */
-        @tailwind base;
-        @tailwind components;
-        @tailwind utilities;
+/* src/app/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-        /* Você pode adicionar estilos CSS globais personalizados aqui */
-        body {
-          font-family: 'Inter', sans-serif; /* Usando a fonte Inter como padrão */
-        }
-        
+/* Você pode adicionar seus próprios estilos globais abaixo destas linhas */
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Exemplo: Um estilo personalizado se você precisar */
+.minha-classe-customizada {
+  font-size: 20px;
+  color: purple;
+}
